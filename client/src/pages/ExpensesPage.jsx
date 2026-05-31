@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getExpenses, createExpense } from '../api/expensesApi';
+import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expensesApi';
 import { getCategories } from '../api/categoriesApi';
 
 const emptyForm = { category_id: '', amount: '', description: '', date: '' };
@@ -8,6 +8,8 @@ export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
   const [error, setError] = useState(null);
 
   function loadExpenses() {
@@ -40,9 +42,52 @@ export default function ExpensesPage() {
     }
   }
 
+  function startEdit(exp) {
+    setEditId(exp.id);
+    setEditForm({
+      category_id: String(exp.category_id),
+      amount: String(exp.amount),
+      description: exp.description,
+      date: exp.date,
+    });
+  }
+
+  function handleEditChange(e) {
+    setEditForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  }
+
+  async function handleEditSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    try {
+      await updateExpense(editId, {
+        category_id: Number(editForm.category_id),
+        amount: Number(editForm.amount),
+        description: editForm.description,
+        date: editForm.date,
+      });
+      setEditId(null);
+      loadExpenses();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update expense');
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this expense?')) return;
+    setError(null);
+    try {
+      await deleteExpense(id);
+      loadExpenses();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete expense');
+    }
+  }
+
   return (
     <div>
       <h1>Expenses</h1>
+      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
 
       <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '0.75rem' }}>Add Expense</h2>
@@ -79,28 +124,68 @@ export default function ExpensesPage() {
             required
           />
           <button type="submit">Add</button>
-          {error && <p style={{ color: '#dc2626', margin: 0 }}>{error}</p>}
         </div>
       </form>
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {expenses.map(exp => (
           <li key={exp.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #e5e7eb' }}>
-            <span style={{ marginRight: '1rem', color: '#6b7280' }}>{exp.date}</span>
-            <span
-              style={{
-                marginRight: '1rem',
-                padding: '0.1rem 0.5rem',
-                borderRadius: '9999px',
-                background: exp.category_color,
-                color: '#fff',
-                fontSize: '0.85rem',
-              }}
-            >
-              {exp.category_name}
-            </span>
-            <span style={{ marginRight: '1rem', fontWeight: 600 }}>${exp.amount.toFixed(2)}</span>
-            <span>{exp.description}</span>
+            {editId === exp.id ? (
+              <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <select name="category_id" value={editForm.category_id} onChange={handleEditChange} required>
+                  <option value="">Select category</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <input
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={editForm.amount}
+                  onChange={handleEditChange}
+                  placeholder="Amount"
+                  required
+                />
+                <input
+                  name="description"
+                  type="text"
+                  value={editForm.description}
+                  onChange={handleEditChange}
+                  placeholder="Description"
+                  required
+                />
+                <input
+                  name="date"
+                  type="date"
+                  value={editForm.date}
+                  onChange={handleEditChange}
+                  required
+                />
+                <button type="submit">Save</button>
+                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+              </form>
+            ) : (
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ color: '#6b7280' }}>{exp.date}</span>
+                <span
+                  style={{
+                    padding: '0.1rem 0.5rem',
+                    borderRadius: '9999px',
+                    background: exp.category_color,
+                    color: '#fff',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {exp.category_name}
+                </span>
+                <span style={{ fontWeight: 600 }}>${exp.amount.toFixed(2)}</span>
+                <span style={{ flex: 1 }}>{exp.description}</span>
+                <button type="button" onClick={() => startEdit(exp)}>Edit</button>
+                <button type="button" onClick={() => handleDelete(exp.id)}>Delete</button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
