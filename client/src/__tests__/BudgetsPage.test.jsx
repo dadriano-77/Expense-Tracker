@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import BudgetsPage from '../pages/BudgetsPage';
-import { getBudgets, upsertBudget } from '../api/budgetsApi';
+import { getBudgets, upsertBudget, deleteBudget } from '../api/budgetsApi';
 
 vi.mock('../api/budgetsApi', () => ({
   getBudgets: vi.fn().mockResolvedValue([]),
@@ -87,5 +87,14 @@ describe('BudgetsPage', () => {
     await userEvent.type(input, '600');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(upsertBudget).toHaveBeenCalledWith(expect.objectContaining({ amount: 600 }));
+  });
+
+  it('Delete button calls deleteBudget', async () => {
+    getBudgets.mockResolvedValueOnce([mockBudget]);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    await waitFor(() => screen.getByText(/500\.00/));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(deleteBudget).toHaveBeenCalledWith(1);
   });
 });

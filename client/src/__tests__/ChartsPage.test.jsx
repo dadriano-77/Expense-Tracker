@@ -116,4 +116,15 @@ describe('ChartsPage', () => {
       expect(axios.get).toHaveBeenCalledWith('/api/dashboard', expect.objectContaining({ params: expect.objectContaining({ month: 1 }) }));
     });
   });
+
+  it('changing the year selector re-fetches with new params', async () => {
+    axios.get.mockResolvedValue({ data: mockDashboard });
+    renderPage();
+    await waitFor(() => screen.getByTestId('bar-chart'));
+    const yearSelect = screen.getAllByRole('combobox')[1];
+    await userEvent.selectOptions(yearSelect, '2025');
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith('/api/dashboard', expect.objectContaining({ params: expect.objectContaining({ year: 2025 }) }));
+    });
+  });
 });
