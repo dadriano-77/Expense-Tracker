@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import ExpensesPage from '../pages/ExpensesPage';
-import { getExpenses, deleteExpense } from '../api/expensesApi';
+import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expensesApi';
 
 vi.mock('../api/expensesApi', () => ({
   getExpenses: vi.fn().mockResolvedValue({ data: [], total: 0 }),
@@ -132,5 +132,28 @@ describe('ExpensesPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     });
+  });
+
+  it('submitting Add Expense form calls createExpense', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Food' }).length).toBeGreaterThan(0));
+    const addForm = screen.getByRole('button', { name: 'Add' }).closest('form');
+    await userEvent.selectOptions(within(addForm).getByRole('combobox'), '1');
+    await userEvent.type(within(addForm).getByPlaceholderText('Amount'), '25');
+    await userEvent.type(within(addForm).getByPlaceholderText('Description'), 'Lunch');
+    await userEvent.click(within(addForm).getByRole('button', { name: 'Add' }));
+    expect(createExpense).toHaveBeenCalledWith(expect.objectContaining({ amount: 25, description: 'Lunch' }));
+  });
+
+  it('saving expense edit calls updateExpense with updated values', async () => {
+    getExpenses.mockResolvedValue({ data: [mockExpense], total: 1, total_amount: 12.5, page: 1, limit: 20 });
+    renderPage();
+    await waitFor(() => screen.getByText('Lunch'));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const amountInput = screen.getByDisplayValue('12.5');
+    await userEvent.clear(amountInput);
+    await userEvent.type(amountInput, '20');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(updateExpense).toHaveBeenCalledWith(1, expect.objectContaining({ amount: 20 }));
   });
 });
