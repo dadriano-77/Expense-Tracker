@@ -4,6 +4,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import CategoriesPage from './pages/CategoriesPage';
 import BudgetsPage from './pages/BudgetsPage';
 import DashboardPage from './pages/DashboardPage';
+import ChartsPage from './pages/ChartsPage';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/budgets" element={<BudgetsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/charts" element={<ChartsPage />} />
         </Routes>
       </main>
     </BrowserRouter>

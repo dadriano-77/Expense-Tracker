@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expensesApi';
 import { getCategories } from '../api/categoriesApi';
 
-const emptyForm = { category_id: '', amount: '', description: '', date: '' };
+const emptyForm = { category_id: '', amount: '', description: '', date: new Date().toISOString().slice(0, 10) };
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
@@ -216,7 +216,7 @@ export default function ExpensesPage() {
                 >
                   {exp.category_name}
                 </span>
-                <span style={{ fontWeight: 600 }}>${exp.amount.toFixed(2)}</span>
+                <span style={{ fontWeight: 600 }}>₱{exp.amount.toFixed(2)}</span>
                 <span style={{ flex: 1 }}>{exp.description}</span>
                 <button type="button" onClick={() => startEdit(exp)}>Edit</button>
                 <button type="button" onClick={() => handleDelete(exp.id)}>Delete</button>

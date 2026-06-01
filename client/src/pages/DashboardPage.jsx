@@ -52,8 +52,8 @@ export default function DashboardPage() {
       {data && !loading && (
         <>
           <div style={{ marginBottom: '1rem', display: 'flex', gap: '2rem' }}>
-            <span>Total Budget: <strong>${data.total_budget.toFixed(2)}</strong></span>
-            <span>Total Spent: <strong>${data.total_spent.toFixed(2)}</strong></span>
+            <span>Total Budget: <strong>₱{data.total_budget.toFixed(2)}</strong></span>
+            <span>Total Spent: <strong>₱{data.total_spent.toFixed(2)}</strong></span>
           </div>
 
           {data.categories.length === 0 ? (
@@ -91,14 +91,14 @@ export default function DashboardPage() {
                         {row.category_name}
                       </div>
                     </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>${row.budget_amount.toFixed(2)}</td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>${row.spent_amount.toFixed(2)}</td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>₱{row.budget_amount.toFixed(2)}</td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>₱{row.spent_amount.toFixed(2)}</td>
                     <td style={{
                       padding: '0.5rem 0.75rem',
                       color: row.remaining_amount < 0 ? '#dc2626' : 'inherit',
                       fontWeight: row.remaining_amount < 0 ? 600 : 'normal',
                     }}>
-                      ${row.remaining_amount.toFixed(2)}
+                      ₱{row.remaining_amount.toFixed(2)}
                     </td>
                     <td style={{ padding: '0.5rem 0.75rem' }}>
                       <div style={{ fontSize: '0.85rem', marginBottom: '4px' }}>

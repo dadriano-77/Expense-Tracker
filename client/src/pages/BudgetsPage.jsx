@@ -94,7 +94,7 @@ export default function BudgetsPage() {
               }}
             />
             <span style={{ flex: 1 }}>{b.category_name}</span>
-            <span style={{ fontWeight: 600 }}>${b.amount.toFixed(2)}</span>
+            <span style={{ fontWeight: 600 }}>₱{b.amount.toFixed(2)}</span>
             <button type="button" onClick={() => handleDelete(b.id)}>Delete</button>
           </li>
         ))}
