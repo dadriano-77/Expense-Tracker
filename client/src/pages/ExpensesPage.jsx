@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expensesApi';
 import { getCategories } from '../api/categoriesApi';
 
-const emptyForm = { category_id: '', amount: '', description: '', date: new Date().toISOString().slice(0, 10) };
+const getLocalDateString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const emptyForm = { category_id: '', amount: '', description: '', date: getLocalDateString() };
 const PAGE_SIZE = 20;
 
 export default function ExpensesPage() {
