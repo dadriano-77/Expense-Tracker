@@ -11,15 +11,27 @@ export default function ExpensesPage() {
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({ year: '', month: '', category_id: '', q: '' });
 
-  function loadExpenses() {
-    getExpenses().then(res => setExpenses(res.data));
+  function loadExpenses(activeFilters) {
+    const params = {};
+    const f = activeFilters ?? filters;
+    if (f.year && f.month) { params.year = f.year; params.month = f.month; }
+    if (f.category_id) params.category_id = f.category_id;
+    if (f.q) params.q = f.q;
+    getExpenses(params).then(res => setExpenses(res.data));
   }
 
   useEffect(() => {
     loadExpenses();
     getCategories().then(setCategories);
   }, []);
+
+  function handleFilterChange(e) {
+    const next = { ...filters, [e.target.name]: e.target.value };
+    setFilters(next);
+    loadExpenses(next);
+  }
 
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -88,6 +100,30 @@ export default function ExpensesPage() {
     <div>
       <h1>Expenses</h1>
       {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
+        <select name="year" value={filters.year} onChange={handleFilterChange}>
+          <option value="">All years</option>
+          {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select name="month" value={filters.month} onChange={handleFilterChange}>
+          <option value="">All months</option>
+          {['January','February','March','April','May','June','July','August','September','October','November','December']
+            .map((label, i) => <option key={i + 1} value={i + 1}>{label}</option>)}
+        </select>
+        <select name="category_id" value={filters.category_id} onChange={handleFilterChange}>
+          <option value="">All categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <input
+          name="q"
+          type="text"
+          value={filters.q}
+          onChange={handleFilterChange}
+          placeholder="Search description"
+          style={{ minWidth: '160px' }}
+        />
+      </div>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '0.75rem' }}>Add Expense</h2>
