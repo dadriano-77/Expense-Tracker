@@ -477,19 +477,21 @@ h2 {
 .mt-3 { margin-top: 1.5rem; }
 .mt-4 { margin-top: 2rem; }
 
-/* ===== RESPONSIVE: TABLET ===== */
+/* ===== RESPONSIVE: TABLET (iPad 10th Gen portrait ~820px) ===== */
 @media (max-width: 900px) {
-  .app-main { padding: 1.25rem; }
+  .app-main { padding: 1.25rem 1rem; }
+
+  .data-table th,
+  .data-table td { padding: 0.55rem 0.6rem; }
 }
 
-/* ===== RESPONSIVE: MOBILE ===== */
+/* ===== RESPONSIVE: MOBILE (Galaxy S25 Ultra portrait ~412px) ===== */
 @media (max-width: 640px) {
-  .app-main { padding: 1rem; }
+  .app-main { padding: 1rem 0.875rem; }
   h1 { font-size: 1.4rem; margin-bottom: 1rem; }
 
-  .navbar { padding: 0 1rem; }
+  .navbar { padding: 0 0.875rem; }
 
-  /* Hamburger menu: expand navbar vertically */
   .navbar-links {
     display: none;
     width: 100%;
@@ -502,27 +504,42 @@ h2 {
   }
 
   .navbar-links.open { display: flex; }
-  .navbar-link { padding: 0.6rem 0.5rem; }
 
-  .hamburger { display: flex; }
+  /* 44px tap targets for nav links and controls */
+  .navbar-link { padding: 0.75rem 0.5rem; min-height: 44px; display: flex; align-items: center; }
+  .hamburger { display: flex; min-width: 44px; min-height: 44px; }
+  .theme-toggle { min-width: 44px; min-height: 44px; }
 
   .stat-row { grid-template-columns: 1fr 1fr; }
-
   .card { padding: 1rem; }
 
+  /* 44px minimum tap target for all interactive controls */
+  .btn { min-height: 44px; padding: 0.6rem 1rem; }
+
+  /* font-size 16px prevents iOS Safari from auto-zooming on input focus */
+  .form-input,
+  .form-select { min-height: 44px; font-size: 16px; padding: 0.6rem 0.75rem; }
+
+  /* Filter bar: consistent 2-per-row grid */
+  .filter-bar { display: grid; grid-template-columns: 1fr 1fr; }
   .filter-bar .form-select,
   .filter-bar .form-input,
-  .search-input {
-    min-width: 0;
-    flex: 1 1 120px;
-  }
+  .search-input { min-width: 0; width: 100%; flex: unset; }
 
   .toolbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+
+  /* Inline edit: each field takes a full row, action buttons share the last row */
+  .inline-edit { gap: 0.5rem; }
+  .inline-edit .form-input,
+  .inline-edit .form-select { flex: 1 1 100%; min-width: 0; }
+  .inline-edit .amount-input { width: 100% !important; }
+  .inline-edit .btn { flex: 1; justify-content: center; }
 
   .data-table th,
   .data-table td { padding: 0.5rem 0.4rem; }
 }
 
+/* ===== RESPONSIVE: EXTRA SMALL ===== */
 @media (max-width: 400px) {
   .stat-row { grid-template-columns: 1fr; }
 }

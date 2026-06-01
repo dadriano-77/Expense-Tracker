@@ -18,6 +18,13 @@ export default function ChartsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -67,11 +74,13 @@ export default function ChartsPage() {
                     data={pieData}
                     dataKey="value"
                     nameKey="name"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={isMobile ? 95 : 110}
+                    label={isMobile ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={!isMobile}
                   >
                     {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                   </Pie>
-                  <PieTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
+                  <PieTooltip formatter={(v, name) => [`₱${Number(v).toFixed(2)}`, name]} />
                   <PieLegend />
                 </PieChart>
               </ResponsiveContainer>
@@ -83,11 +92,22 @@ export default function ChartsPage() {
             {barData.length === 0 ? (
               <p className="empty-state">No data for this period.</p>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={isMobile ? 260 : 300}>
+                <BarChart
+                  data={barData}
+                  margin={isMobile
+                    ? { top: 5, right: 10, left: -20, bottom: 50 }
+                    : { top: 5, right: 20, left: 0, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: 'var(--text-muted)', fontSize: isMobile ? 10 : 12 }}
+                    angle={isMobile ? -40 : 0}
+                    textAnchor={isMobile ? 'end' : 'middle'}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: isMobile ? 10 : 12 }} />
                   <BarTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
                   <BarLegend />
                   <Bar dataKey="Budget" fill="#7c6ff7" radius={[4, 4, 0, 0]} />
