@@ -42,56 +42,60 @@ export default function ChartsPage() {
     <div>
       <h1>Charts</h1>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <select value={month} onChange={e => setMonth(Number(e.target.value))}>
+      <div className="period-picker">
+        <select className="form-select" value={month} onChange={e => setMonth(Number(e.target.value))}>
           {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
         </select>
-        <select value={year} onChange={e => setYear(Number(e.target.value))}>
+        <select className="form-select" value={year} onChange={e => setYear(Number(e.target.value))}>
           {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {loading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       {data && (
         <>
-          <h2>Spending by Category</h2>
-          {pieData.length === 0 ? (
-            <p>No spending data for this period.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                </Pie>
-                <PieTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
-                <PieLegend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+          <div className="chart-section">
+            <h2>Spending by Category</h2>
+            {pieData.length === 0 ? (
+              <p className="empty-state">No spending data for this period.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Pie>
+                  <PieTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
+                  <PieLegend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-          <h2 style={{ marginTop: '2rem' }}>Budget vs Actual</h2>
-          {barData.length === 0 ? (
-            <p>No data for this period.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={barData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <BarTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
-                <BarLegend />
-                <Bar dataKey="Budget" fill="#6366f1" />
-                <Bar dataKey="Actual" fill="#f59e0b" />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <div className="chart-section">
+            <h2>Budget vs Actual</h2>
+            {barData.length === 0 ? (
+              <p className="empty-state">No data for this period.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={barData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                  <BarTooltip formatter={v => `₱${Number(v).toFixed(2)}`} />
+                  <BarLegend />
+                  <Bar dataKey="Budget" fill="#7c6ff7" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Actual" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </>
       )}
     </div>

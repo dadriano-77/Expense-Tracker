@@ -10,7 +10,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <main style={{ padding: '1.5rem', maxWidth: 900, margin: '0 auto' }}>
+      <main className="app-main">
         <Routes>
           <Route path="/" element={<Navigate to="/expenses" replace />} />
           <Route path="/expenses" element={<ExpensesPage />} />
