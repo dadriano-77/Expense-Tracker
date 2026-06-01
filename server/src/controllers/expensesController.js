@@ -1,12 +1,39 @@
 const db = require('../db/database');
 
 exports.getAll = (req, res) => {
+  const { year, month, category_id, q } = req.query;
+
+  const conditions = [];
+  const params = [];
+
+  if (year && month) {
+    const parsedYear = Number(year);
+    const parsedMonth = Number(month);
+    if (!Number.isInteger(parsedYear) || !Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      return res.status(400).json({ error: 'invalid year or month' });
+    }
+    conditions.push(`substr(e.date, 1, 7) = ?`);
+    params.push(`${parsedYear}-${String(parsedMonth).padStart(2, '0')}`);
+  }
+
+  if (category_id) {
+    conditions.push('e.category_id = ?');
+    params.push(Number(category_id));
+  }
+
+  if (q) {
+    conditions.push('e.description LIKE ?');
+    params.push(`%${q}%`);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const rows = db.prepare(`
     SELECT e.*, c.name AS category_name, c.color AS category_color
     FROM expenses e
     JOIN categories c ON e.category_id = c.id
+    ${where}
     ORDER BY e.date DESC, e.id DESC
-  `).all();
+  `).all(...params);
   res.json({ data: rows, total: rows.length });
 };
 

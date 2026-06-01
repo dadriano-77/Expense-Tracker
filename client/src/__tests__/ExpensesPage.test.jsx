@@ -55,7 +55,7 @@ describe('ExpensesPage', () => {
   it('loads categories into the select dropdown', async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByRole('option', { name: 'Food' })).toBeInTheDocument();
+      expect(screen.getAllByRole('option', { name: 'Food' }).length).toBeGreaterThan(0);
     });
   });
 
@@ -92,5 +92,24 @@ describe('ExpensesPage', () => {
     await waitFor(() => screen.getByText('Lunch'));
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(deleteExpense).toHaveBeenCalledWith(1);
+  });
+
+  it('selecting a month filter calls getExpenses with year and month params', async () => {
+    renderPage();
+    await waitFor(() => expect(getExpenses).toHaveBeenCalledTimes(1));
+    await userEvent.selectOptions(screen.getAllByRole('combobox')[0], '2026');
+    await userEvent.selectOptions(screen.getAllByRole('combobox')[1], '5');
+    await waitFor(() => {
+      expect(getExpenses).toHaveBeenCalledWith(expect.objectContaining({ year: '2026', month: '5' }));
+    });
+  });
+
+  it('typing in the search input calls getExpenses with q param', async () => {
+    renderPage();
+    await waitFor(() => expect(getExpenses).toHaveBeenCalledTimes(1));
+    await userEvent.type(screen.getByPlaceholderText('Search description'), 'coffee');
+    await waitFor(() => {
+      expect(getExpenses).toHaveBeenCalledWith(expect.objectContaining({ q: 'coffee' }));
+    });
   });
 });

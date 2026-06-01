@@ -24,6 +24,50 @@ describe('Expenses API', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
+  // ── GET filters ──────────────────────────────────────────────────────────
+
+  it('GET /api/expenses?year&month returns only expenses in that month', async () => {
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'May expense', date: '2026-05-15' });
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 20, description: 'June expense', date: '2026-06-01' });
+    const res = await request(app).get('/api/expenses?year=2026&month=5');
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].description).toBe('May expense');
+  });
+
+  it('GET /api/expenses?category_id returns only that category', async () => {
+    db.exec("INSERT INTO categories (name, color) VALUES ('Transport', '#0000ff')");
+    const transportId = db.prepare("SELECT id FROM categories WHERE name = 'Transport'").get().id;
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'Food item', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: transportId, amount: 5, description: 'Bus fare', date: '2026-05-01' });
+    const res = await request(app).get(`/api/expenses?category_id=${transportId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].description).toBe('Bus fare');
+  });
+
+  it('GET /api/expenses?q returns only matching descriptions', async () => {
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'Lunch at cafe', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 5, description: 'Coffee', date: '2026-05-01' });
+    const res = await request(app).get('/api/expenses?q=lunch');
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].description).toBe('Lunch at cafe');
+  });
+
+  it('GET /api/expenses with combined filters returns intersection', async () => {
+    db.exec("INSERT INTO categories (name, color) VALUES ('Transport', '#0000ff')");
+    const transportId = db.prepare("SELECT id FROM categories WHERE name = 'Transport'").get().id;
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'Lunch', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: transportId, amount: 5, description: 'Lunch bus', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 8, description: 'Lunch', date: '2026-06-01' });
+    const res = await request(app).get(`/api/expenses?year=2026&month=5&category_id=${categoryId}&q=Lunch`);
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].description).toBe('Lunch');
+    expect(res.body.data[0].category_id).toBe(categoryId);
+  });
+
   // ── POST ─────────────────────────────────────────────────────────────────
 
   it('POST /api/expenses creates an expense and returns 201', async () => {
