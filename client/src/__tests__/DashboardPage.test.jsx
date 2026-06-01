@@ -56,7 +56,7 @@ describe('DashboardPage', () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByText('Food')).toBeInTheDocument();
-      expect(screen.getByText('$250.00')).toBeInTheDocument(); // remaining — unique to table row
+      expect(screen.getByText('₱250.00')).toBeInTheDocument(); // remaining — unique to table row
       expect(screen.getByText('37.5%')).toBeInTheDocument();  // utilization — unique to table row
     });
   });

@@ -21,6 +21,7 @@ export default function Navbar() {
       <NavLink to="/categories" style={linkStyle}>Categories</NavLink>
       <NavLink to="/budgets" style={linkStyle}>Budgets</NavLink>
       <NavLink to="/dashboard" style={linkStyle}>Dashboard</NavLink>
+      <NavLink to="/charts" style={linkStyle}>Charts</NavLink>
     </nav>
   );
 }
