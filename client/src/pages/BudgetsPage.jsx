@@ -77,10 +77,11 @@ export default function BudgetsPage() {
   return (
     <div>
       <h1>Budgets</h1>
-      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {error && <p className="error-msg">{error}</p>}
 
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="period-picker">
         <select
+          className="form-select"
           value={month}
           onChange={e => setMonth(Number(e.target.value))}
           aria-label="Month"
@@ -91,26 +92,17 @@ export default function BudgetsPage() {
         </select>
         <input
           type="number"
+          className="form-input year-input"
           value={year}
           onChange={e => setYear(Number(e.target.value))}
-          style={{ width: '80px' }}
           aria-label="Year"
         />
       </div>
 
-      <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem' }}>
+      <ul className="data-list" style={{ marginBottom: '1.5rem' }}>
         {budgets.map(b => (
-          <li key={b.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                width: '16px',
-                height: '16px',
-                borderRadius: '3px',
-                background: b.category_color,
-                flexShrink: 0,
-              }}
-            />
+          <li key={b.id} className="list-item">
+            <span className="swatch" style={{ background: b.category_color }} />
             <span style={{ flex: 1 }}>{b.category_name}</span>
             {editId === b.id ? (
               <>
@@ -118,53 +110,58 @@ export default function BudgetsPage() {
                   type="number"
                   min="0"
                   step="0.01"
+                  className="form-input amount-input"
                   value={editAmount}
                   onChange={e => setEditAmount(e.target.value)}
-                  style={{ width: '100px' }}
                   aria-label="Edit amount"
                 />
-                <button type="button" onClick={() => handleEditSave(b)}>Save</button>
-                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={() => handleEditSave(b)}>Save</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setEditId(null)}>Cancel</button>
               </>
             ) : (
               <>
                 <span style={{ fontWeight: 600 }}>₱{b.amount.toFixed(2)}</span>
-                <button type="button" onClick={() => startEdit(b)}>Edit</button>
-                <button type="button" onClick={() => handleDelete(b.id)}>Delete</button>
+                <button type="button" className="btn btn-ghost" onClick={() => startEdit(b)}>Edit</button>
+                <button type="button" className="btn btn-danger" onClick={() => handleDelete(b.id)}>Delete</button>
               </>
             )}
           </li>
         ))}
         {budgets.length === 0 && (
-          <li style={{ color: '#6b7280' }}>No budgets set for this month.</li>
+          <li className="empty-state">No budgets set for this month.</li>
         )}
       </ul>
 
-      <form onSubmit={handleUpsert}>
-        <h2 style={{ marginBottom: '0.75rem' }}>Set Budget</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <select
-            value={form.category_id}
-            onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-            required
-          >
-            <option value="">Select category</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.amount}
-            onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-            placeholder="Amount"
-            required
-          />
-          <button type="submit">Set</button>
-        </div>
-      </form>
+      <div className="card">
+        <h2>Set Budget</h2>
+        <form onSubmit={handleUpsert}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              className="form-select"
+              style={{ flex: 1, minWidth: '140px' }}
+              value={form.category_id}
+              onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+              required
+            >
+              <option value="">Select category</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              className="form-input amount-input"
+              value={form.amount}
+              onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+              placeholder="Amount"
+              required
+            />
+            <button type="submit" className="btn btn-primary">Set</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

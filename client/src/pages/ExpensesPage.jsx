@@ -127,83 +127,88 @@ export default function ExpensesPage() {
   return (
     <div>
       <h1>Expenses</h1>
-      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {error && <p className="error-msg">{error}</p>}
 
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
-        <select name="year" value={filters.year} onChange={handleFilterChange}>
+      <div className="filter-bar">
+        <select name="year" className="form-select" value={filters.year} onChange={handleFilterChange}>
           <option value="">All years</option>
           {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        <select name="month" value={filters.month} onChange={handleFilterChange}>
+        <select name="month" className="form-select" value={filters.month} onChange={handleFilterChange}>
           <option value="">All months</option>
           {['January','February','March','April','May','June','July','August','September','October','November','December']
             .map((label, i) => <option key={i + 1} value={i + 1}>{label}</option>)}
         </select>
-        <select name="category_id" value={filters.category_id} onChange={handleFilterChange}>
+        <select name="category_id" className="form-select" value={filters.category_id} onChange={handleFilterChange}>
           <option value="">All categories</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <input
           name="q"
           type="text"
+          className="form-input search-input"
           value={filters.q}
           onChange={handleFilterChange}
           placeholder="Search description"
-          style={{ minWidth: '160px' }}
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+      <div className="toolbar">
+        <span className="toolbar-meta">
           {total} expense{total !== 1 ? 's' : ''} · ₱{totalAmount.toFixed(2)}
         </span>
-        <button type="button" onClick={handleExport}>Export CSV</button>
+        <button type="button" className="btn btn-ghost" onClick={handleExport}>Export CSV</button>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
-        <h2 style={{ marginBottom: '0.75rem' }}>Add Expense</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
-          <select name="category_id" value={form.category_id} onChange={handleChange} required>
-            <option value="">Select category</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          <input
-            name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={form.amount}
-            onChange={handleChange}
-            placeholder="Amount"
-            required
-          />
-          <input
-            name="description"
-            type="text"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description"
-            required
-          />
-          <input
-            name="date"
-            type="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-          />
-          <button type="submit">Add</button>
-        </div>
-      </form>
+      <div className="card">
+        <h2>Add Expense</h2>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
+            <select name="category_id" className="form-select" value={form.category_id} onChange={handleChange} required>
+              <option value="">Select category</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              className="form-input"
+              value={form.amount}
+              onChange={handleChange}
+              placeholder="Amount"
+              required
+            />
+            <input
+              name="description"
+              type="text"
+              className="form-input"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Description"
+              required
+            />
+            <input
+              name="date"
+              type="date"
+              className="form-input"
+              value={form.date}
+              onChange={handleChange}
+              required
+            />
+            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Add</button>
+          </div>
+        </form>
+      </div>
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul className="data-list">
         {expenses.map(exp => (
-          <li key={exp.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #e5e7eb' }}>
+          <li key={exp.id} className="list-item" style={{ flexWrap: 'wrap' }}>
             {editId === exp.id ? (
-              <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <select name="category_id" value={editForm.category_id} onChange={handleEditChange} required>
+              <form className="inline-edit" style={{ width: '100%' }} onSubmit={handleEditSubmit}>
+                <select name="category_id" className="form-select" value={editForm.category_id} onChange={handleEditChange} required>
                   <option value="">Select category</option>
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -214,6 +219,7 @@ export default function ExpensesPage() {
                   type="number"
                   step="0.01"
                   min="0.01"
+                  className="form-input amount-input"
                   value={editForm.amount}
                   onChange={handleEditChange}
                   placeholder="Amount"
@@ -222,6 +228,8 @@ export default function ExpensesPage() {
                 <input
                   name="description"
                   type="text"
+                  className="form-input"
+                  style={{ flex: 1, minWidth: '120px' }}
                   value={editForm.description}
                   onChange={handleEditChange}
                   placeholder="Description"
@@ -230,42 +238,36 @@ export default function ExpensesPage() {
                 <input
                   name="date"
                   type="date"
+                  className="form-input"
                   value={editForm.date}
                   onChange={handleEditChange}
                   required
                 />
-                <button type="submit">Save</button>
-                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setEditId(null)}>Cancel</button>
               </form>
             ) : (
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ color: '#6b7280' }}>{exp.date}</span>
-                <span
-                  style={{
-                    padding: '0.1rem 0.5rem',
-                    borderRadius: '9999px',
-                    background: exp.category_color,
-                    color: '#fff',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  {exp.category_name}
-                </span>
-                <span style={{ fontWeight: 600 }}>₱{exp.amount.toFixed(2)}</span>
-                <span style={{ flex: 1 }}>{exp.description}</span>
-                <button type="button" onClick={() => startEdit(exp)}>Edit</button>
-                <button type="button" onClick={() => handleDelete(exp.id)}>Delete</button>
-              </div>
+              <>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{exp.date}</span>
+                <span className="badge" style={{ background: exp.category_color }}>{exp.category_name}</span>
+                <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>₱{exp.amount.toFixed(2)}</span>
+                <span style={{ flex: 1, minWidth: '80px' }}>{exp.description}</span>
+                <button type="button" className="btn btn-ghost" onClick={() => startEdit(exp)}>Edit</button>
+                <button type="button" className="btn btn-danger" onClick={() => handleDelete(exp.id)}>Delete</button>
+              </>
             )}
           </li>
         ))}
+        {expenses.length === 0 && (
+          <li className="empty-state">No expenses found.</li>
+        )}
       </ul>
 
       {Math.ceil(total / PAGE_SIZE) > 1 && (
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '1rem 0' }}>
-          <button type="button" onClick={() => goToPage(page - 1)} disabled={page === 1}>Previous</button>
+        <div className="pagination">
+          <button type="button" className="btn btn-ghost" onClick={() => goToPage(page - 1)} disabled={page === 1}>Previous</button>
           <span>Page {page} of {Math.ceil(total / PAGE_SIZE)}</span>
-          <button type="button" onClick={() => goToPage(page + 1)} disabled={page >= Math.ceil(total / PAGE_SIZE)}>Next</button>
+          <button type="button" className="btn btn-ghost" onClick={() => goToPage(page + 1)} disabled={page >= Math.ceil(total / PAGE_SIZE)}>Next</button>
         </div>
       )}
     </div>

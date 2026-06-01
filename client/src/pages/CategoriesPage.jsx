@@ -61,34 +61,41 @@ export default function CategoriesPage() {
   return (
     <div>
       <h1>Categories</h1>
-      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {error && <p className="error-msg">{error}</p>}
 
-      <form onSubmit={handleAdd} style={{ marginBottom: '2rem' }}>
-        <h2 style={{ marginBottom: '0.75rem' }}>Add Category</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            type="text"
-            value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            placeholder="Name"
-            required
-          />
-          <input
-            type="color"
-            value={form.color}
-            onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-          />
-          <button type="submit">Add</button>
-        </div>
-      </form>
+      <div className="card">
+        <h2>Add Category</h2>
+        <form onSubmit={handleAdd}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              className="form-input"
+              style={{ flex: 1, minWidth: '140px' }}
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Name"
+              required
+            />
+            <input
+              type="color"
+              value={form.color}
+              onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+              style={{ width: '42px', height: '38px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', background: 'var(--surface)' }}
+            />
+            <button type="submit" className="btn btn-primary">Add</button>
+          </div>
+        </form>
+      </div>
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul className="data-list">
         {categories.map(cat => (
-          <li key={cat.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #e5e7eb' }}>
+          <li key={cat.id} className="list-item">
             {editId === cat.id ? (
-              <form onSubmit={handleEdit} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <form className="inline-edit" style={{ width: '100%' }} onSubmit={handleEdit}>
                 <input
                   type="text"
+                  className="form-input"
+                  style={{ flex: 1, minWidth: '140px' }}
                   value={editForm.name}
                   onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                   required
@@ -97,29 +104,24 @@ export default function CategoriesPage() {
                   type="color"
                   value={editForm.color}
                   onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
+                  style={{ width: '42px', height: '38px', padding: '2px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', background: 'var(--surface)' }}
                 />
-                <button type="submit">Save</button>
-                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setEditId(null)}>Cancel</button>
               </form>
             ) : (
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '3px',
-                    background: cat.color,
-                    flexShrink: 0,
-                  }}
-                />
+              <>
+                <span className="swatch" style={{ background: cat.color }} />
                 <span style={{ flex: 1 }}>{cat.name}</span>
-                <button type="button" onClick={() => startEdit(cat)}>Edit</button>
-                <button type="button" onClick={() => handleDelete(cat.id)}>Delete</button>
-              </div>
+                <button type="button" className="btn btn-ghost" onClick={() => startEdit(cat)}>Edit</button>
+                <button type="button" className="btn btn-danger" onClick={() => handleDelete(cat.id)}>Delete</button>
+              </>
             )}
           </li>
         ))}
+        {categories.length === 0 && (
+          <li className="empty-state">No categories yet.</li>
+        )}
       </ul>
     </div>
   );
