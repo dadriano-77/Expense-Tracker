@@ -36,7 +36,7 @@ function renderPage() {
 describe('ExpensesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getExpenses.mockResolvedValue({ data: [], total: 0 });
+    getExpenses.mockResolvedValue({ data: [], total: 0, total_amount: 0, page: 1, limit: 20 });
   });
 
   it('renders the page heading', () => {
@@ -110,6 +110,27 @@ describe('ExpensesPage', () => {
     await userEvent.type(screen.getByPlaceholderText('Search description'), 'coffee');
     await waitFor(() => {
       expect(getExpenses).toHaveBeenCalledWith(expect.objectContaining({ q: 'coffee' }));
+    });
+  });
+
+  it('shows expense count and total amount in summary bar', async () => {
+    getExpenses.mockResolvedValue({ data: [mockExpense], total: 1, total_amount: 12.5, page: 1, limit: 20 });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(/1 expense[^s]/)).toBeInTheDocument();
+    });
+  });
+
+  it('renders Export CSV button', () => {
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeInTheDocument();
+  });
+
+  it('shows Next pagination button when total exceeds page size', async () => {
+    getExpenses.mockResolvedValue({ data: [mockExpense], total: 25, total_amount: 312.5, page: 1, limit: 20 });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     });
   });
 });

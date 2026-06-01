@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import BudgetsPage from '../pages/BudgetsPage';
+import { getBudgets, upsertBudget } from '../api/budgetsApi';
 
 vi.mock('../api/budgetsApi', () => ({
   getBudgets: vi.fn().mockResolvedValue([]),
@@ -20,7 +22,16 @@ function renderPage() {
   );
 }
 
+const mockBudget = {
+  id: 1, category_id: 1, category_name: 'Food', category_color: '#ff0000',
+  amount: 500, year: 2026, month: 6,
+};
+
 describe('BudgetsPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the page heading', () => {
     renderPage();
     expect(screen.getByText('Budgets')).toBeInTheDocument();
@@ -40,13 +51,41 @@ describe('BudgetsPage', () => {
   });
 
   it('displays fetched budgets', async () => {
-    const { getBudgets } = await import('../api/budgetsApi');
-    getBudgets.mockResolvedValueOnce([
-      { id: 1, category_id: 1, category_name: 'Food', category_color: '#ff0000', amount: 500, year: 2026, month: 5 },
-    ]);
+    getBudgets.mockResolvedValueOnce([mockBudget]);
     renderPage();
     await waitFor(() => {
       expect(screen.getByText(/500\.00/)).toBeInTheDocument();
     });
+  });
+
+  it('Edit button reveals inline amount input with Save and Cancel', async () => {
+    getBudgets.mockResolvedValueOnce([mockBudget]);
+    renderPage();
+    await waitFor(() => screen.getByText(/500\.00/));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('spinbutton', { name: 'Edit amount' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  });
+
+  it('Cancel edit hides the inline edit form', async () => {
+    getBudgets.mockResolvedValueOnce([mockBudget]);
+    renderPage();
+    await waitFor(() => screen.getByText(/500\.00/));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  });
+
+  it('Save calls upsertBudget with updated amount', async () => {
+    getBudgets.mockResolvedValueOnce([mockBudget]);
+    renderPage();
+    await waitFor(() => screen.getByText(/500\.00/));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const input = screen.getByRole('spinbutton', { name: 'Edit amount' });
+    await userEvent.clear(input);
+    await userEvent.type(input, '600');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(upsertBudget).toHaveBeenCalledWith(expect.objectContaining({ amount: 600 }));
   });
 });

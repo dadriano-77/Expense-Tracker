@@ -14,6 +14,8 @@ export default function BudgetsPage() {
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({ category_id: '', amount: '' });
+  const [editId, setEditId] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
   const [error, setError] = useState(null);
 
   function loadBudgets() {
@@ -42,6 +44,22 @@ export default function BudgetsPage() {
       loadBudgets();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to set budget');
+    }
+  }
+
+  function startEdit(b) {
+    setEditId(b.id);
+    setEditAmount(String(b.amount));
+  }
+
+  async function handleEditSave(b) {
+    setError(null);
+    try {
+      await upsertBudget({ category_id: b.category_id, amount: Number(editAmount), year, month });
+      setEditId(null);
+      loadBudgets();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update budget');
     }
   }
 
@@ -94,8 +112,27 @@ export default function BudgetsPage() {
               }}
             />
             <span style={{ flex: 1 }}>{b.category_name}</span>
-            <span style={{ fontWeight: 600 }}>₱{b.amount.toFixed(2)}</span>
-            <button type="button" onClick={() => handleDelete(b.id)}>Delete</button>
+            {editId === b.id ? (
+              <>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editAmount}
+                  onChange={e => setEditAmount(e.target.value)}
+                  style={{ width: '100px' }}
+                  aria-label="Edit amount"
+                />
+                <button type="button" onClick={() => handleEditSave(b)}>Save</button>
+                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <span style={{ fontWeight: 600 }}>₱{b.amount.toFixed(2)}</span>
+                <button type="button" onClick={() => startEdit(b)}>Edit</button>
+                <button type="button" onClick={() => handleDelete(b.id)}>Delete</button>
+              </>
+            )}
           </li>
         ))}
         {budgets.length === 0 && (

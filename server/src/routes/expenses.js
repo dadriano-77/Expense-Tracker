@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require('../controllers/expensesController');
 
 router.get('/', controller.getAll);
+router.get('/export', controller.exportCsv);
 router.get('/:id', controller.getOne);
 router.post('/', controller.create);
 router.put('/:id', controller.update);

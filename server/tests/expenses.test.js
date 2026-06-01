@@ -24,6 +24,59 @@ describe('Expenses API', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
+  // ── GET pagination & totals ───────────────────────────────────────────────
+
+  it('GET /api/expenses returns total_amount', async () => {
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10.5, description: 'A', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 5.5, description: 'B', date: '2026-05-01' });
+    const res = await request(app).get('/api/expenses');
+    expect(res.status).toBe(200);
+    expect(res.body.total_amount).toBe(16);
+  });
+
+  it('GET /api/expenses?limit=2 respects limit and returns total', async () => {
+    for (let i = 0; i < 3; i++) {
+      await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: `Item ${i}`, date: '2026-05-01' });
+    }
+    const res = await request(app).get('/api/expenses?limit=2');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.total).toBe(3);
+    expect(res.body.limit).toBe(2);
+    expect(res.body.page).toBe(1);
+  });
+
+  it('GET /api/expenses?page=2&limit=2 returns second page', async () => {
+    for (let i = 0; i < 3; i++) {
+      await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: `Item ${i}`, date: '2026-05-01' });
+    }
+    const res = await request(app).get('/api/expenses?page=2&limit=2');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.total).toBe(3);
+    expect(res.body.page).toBe(2);
+  });
+
+  // ── GET export ────────────────────────────────────────────────────────────
+
+  it('GET /api/expenses/export returns CSV with correct headers', async () => {
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'Lunch', date: '2026-05-01' });
+    const res = await request(app).get('/api/expenses/export');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.text).toContain('Date,Category,Amount,Description');
+    expect(res.text).toContain('Lunch');
+    expect(res.text).toContain('Food');
+  });
+
+  it('GET /api/expenses/export filters by description query', async () => {
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 10, description: 'Lunch', date: '2026-05-01' });
+    await request(app).post('/api/expenses').send({ category_id: categoryId, amount: 5, description: 'Coffee', date: '2026-05-01' });
+    const res = await request(app).get('/api/expenses/export?q=coffee');
+    expect(res.text).toContain('Coffee');
+    expect(res.text).not.toContain('Lunch');
+  });
+
   // ── GET filters ──────────────────────────────────────────────────────────
 
   it('GET /api/expenses?year&month returns only expenses in that month', async () => {
