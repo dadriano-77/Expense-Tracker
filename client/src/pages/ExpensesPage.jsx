@@ -3,6 +3,7 @@ import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api
 import { getCategories } from '../api/categoriesApi';
 
 const emptyForm = { category_id: '', amount: '', description: '', date: new Date().toISOString().slice(0, 10) };
+const PAGE_SIZE = 20;
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
@@ -12,14 +13,24 @@ export default function ExpensesPage() {
   const [editForm, setEditForm] = useState(emptyForm);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ year: '', month: '', category_id: '', q: '' });
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
 
-  function loadExpenses(activeFilters) {
+  function loadExpenses(activeFilters, activePage) {
     const params = {};
     const f = activeFilters ?? filters;
+    const p = activePage ?? page;
     if (f.year && f.month) { params.year = f.year; params.month = f.month; }
     if (f.category_id) params.category_id = f.category_id;
     if (f.q) params.q = f.q;
-    getExpenses(params).then(res => setExpenses(res.data));
+    params.page = p;
+    params.limit = PAGE_SIZE;
+    getExpenses(params).then(res => {
+      setExpenses(res.data);
+      setTotal(res.total ?? 0);
+      setTotalAmount(res.total_amount ?? 0);
+    });
   }
 
   useEffect(() => {
@@ -30,7 +41,24 @@ export default function ExpensesPage() {
   function handleFilterChange(e) {
     const next = { ...filters, [e.target.name]: e.target.value };
     setFilters(next);
-    loadExpenses(next);
+    setPage(1);
+    loadExpenses(next, 1);
+  }
+
+  function goToPage(newPage) {
+    setPage(newPage);
+    loadExpenses(filters, newPage);
+  }
+
+  function handleExport() {
+    const params = new URLSearchParams();
+    if (filters.year && filters.month) {
+      params.set('year', filters.year);
+      params.set('month', filters.month);
+    }
+    if (filters.category_id) params.set('category_id', filters.category_id);
+    if (filters.q) params.set('q', filters.q);
+    window.location.href = `/api/expenses/export?${params}`;
   }
 
   function handleChange(e) {
@@ -123,6 +151,13 @@ export default function ExpensesPage() {
           placeholder="Search description"
           style={{ minWidth: '160px' }}
         />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+          {total} expense{total !== 1 ? 's' : ''} · ₱{totalAmount.toFixed(2)}
+        </span>
+        <button type="button" onClick={handleExport}>Export CSV</button>
       </div>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
@@ -225,6 +260,14 @@ export default function ExpensesPage() {
           </li>
         ))}
       </ul>
+
+      {Math.ceil(total / PAGE_SIZE) > 1 && (
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '1rem 0' }}>
+          <button type="button" onClick={() => goToPage(page - 1)} disabled={page === 1}>Previous</button>
+          <span>Page {page} of {Math.ceil(total / PAGE_SIZE)}</span>
+          <button type="button" onClick={() => goToPage(page + 1)} disabled={page >= Math.ceil(total / PAGE_SIZE)}>Next</button>
+        </div>
+      )}
     </div>
   );
 }

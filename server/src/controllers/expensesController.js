@@ -1,8 +1,7 @@
 const db = require('../db/database');
 
-exports.getAll = (req, res) => {
-  const { year, month, category_id, q } = req.query;
-
+function buildWhere(query) {
+  const { year, month, category_id, q } = query;
   const conditions = [];
   const params = [];
 
@@ -10,7 +9,7 @@ exports.getAll = (req, res) => {
     const parsedYear = Number(year);
     const parsedMonth = Number(month);
     if (!Number.isInteger(parsedYear) || !Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
-      return res.status(400).json({ error: 'invalid year or month' });
+      return null;
     }
     conditions.push(`substr(e.date, 1, 7) = ?`);
     params.push(`${parsedYear}-${String(parsedMonth).padStart(2, '0')}`);
@@ -26,7 +25,42 @@ exports.getAll = (req, res) => {
     params.push(`%${q}%`);
   }
 
-  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params };
+}
+
+exports.getAll = (req, res) => {
+  const built = buildWhere(req.query);
+  if (!built) return res.status(400).json({ error: 'invalid year or month' });
+  const { where, params } = built;
+
+  const { total, total_amount } = db.prepare(`
+    SELECT COUNT(*) AS total, COALESCE(SUM(e.amount), 0) AS total_amount
+    FROM expenses e
+    JOIN categories c ON e.category_id = c.id
+    ${where}
+  `).get(...params);
+
+  const parsedLimit = Math.max(1, Number(req.query.limit) || 20);
+  const parsedPage = Math.max(1, Number(req.query.page) || 1);
+  const offset = (parsedPage - 1) * parsedLimit;
+
+  const rows = db.prepare(`
+    SELECT e.*, c.name AS category_name, c.color AS category_color
+    FROM expenses e
+    JOIN categories c ON e.category_id = c.id
+    ${where}
+    ORDER BY e.date DESC, e.id DESC
+    LIMIT ? OFFSET ?
+  `).all(...params, parsedLimit, offset);
+
+  res.json({ data: rows, total, total_amount, page: parsedPage, limit: parsedLimit });
+};
+
+exports.exportCsv = (req, res) => {
+  const built = buildWhere(req.query);
+  if (!built) return res.status(400).json({ error: 'invalid year or month' });
+  const { where, params } = built;
+
   const rows = db.prepare(`
     SELECT e.*, c.name AS category_name, c.color AS category_color
     FROM expenses e
@@ -34,7 +68,22 @@ exports.getAll = (req, res) => {
     ${where}
     ORDER BY e.date DESC, e.id DESC
   `).all(...params);
-  res.json({ data: rows, total: rows.length });
+
+  function csvField(v) {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  }
+
+  const header = 'Date,Category,Amount,Description\n';
+  const lines = rows.map(r =>
+    [csvField(r.date), csvField(r.category_name), r.amount, csvField(r.description)].join(',')
+  ).join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename=expenses.csv');
+  res.send(header + lines);
 };
 
 exports.getOne = (req, res) => {
