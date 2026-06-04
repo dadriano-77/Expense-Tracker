@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function SunIcon() {
   return (
@@ -38,11 +39,18 @@ export default function Navbar() {
     () => document.documentElement.getAttribute('data-theme') === 'dark'
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   }, [dark]);
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
 
   return (
     <nav className="navbar">
@@ -59,6 +67,13 @@ export default function Navbar() {
             {label}
           </NavLink>
         ))}
+      </div>
+
+      <div className="navbar-user">
+        <span className="navbar-username">{user?.username}</span>
+        <button type="button" className="btn btn-ghost navbar-logout" onClick={handleLogout}>
+          Log out
+        </button>
       </div>
 
       <button
