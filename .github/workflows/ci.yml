@@ -1,0 +1,227 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ── Server + Client tests run in parallel ─────────────────────────────────
+  server-tests:
+    name: Server Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+
+      - name: Run server tests
+        env:
+          CI: true
+          JWT_SECRET: test-secret
+          NODE_OPTIONS: --experimental-sqlite
+        run: npm test -- --json --outputFile=../server-results.json
+
+      - name: Write job summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            let data;
+            try {
+              data = JSON.parse(fs.readFileSync('server-results.json', 'utf8'));
+            } catch {
+              core.summary.addHeading('Server Tests — results unavailable').write();
+              return;
+            }
+            const failed = data.numFailedTests || 0;
+            const passed = data.numPassedTests || 0;
+            const total  = data.numTotalTests  || 0;
+            const pct    = total > 0 ? Math.round((passed / total) * 100) : 0;
+            const icon   = failed === 0 ? '✅' : '❌';
+            const rows   = (data.testResults || []).flatMap(suite =>
+              (suite.testResults || []).map(t => [
+                path.basename(suite.testFilePath || ''),
+                t.fullName || '',
+                t.status === 'passed' ? '✅ PASS' : t.status === 'failed' ? '❌ FAIL' : '⏭ SKIP',
+                t.duration ? `${t.duration}ms` : '—',
+              ])
+            );
+            await core.summary
+              .addHeading(`${icon} Server Tests — ${failed === 0 ? 'PASSED' : 'FAILED'}`)
+              .addTable([
+                [
+                  { data: 'Suite',    header: true },
+                  { data: 'Test',     header: true },
+                  { data: 'Result',   header: true },
+                  { data: 'Duration', header: true },
+                ],
+                ...rows,
+              ])
+              .addRaw(`\n**Total:** ${total} | **Passed:** ${passed} | **Failed:** ${failed} | **Pass Rate:** ${pct}%\n`)
+              .write();
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: server-results
+          path: server-results.json
+
+  client-tests:
+    name: Client Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+
+      - name: Run client tests
+        env:
+          CI: true
+        run: npm test -- --reporter=json --outputFile=../client-results.json
+
+      - name: Write job summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            let data;
+            try {
+              data = JSON.parse(fs.readFileSync('client-results.json', 'utf8'));
+            } catch {
+              core.summary.addHeading('Client Tests — results unavailable').write();
+              return;
+            }
+            const failed = data.numFailedTests || 0;
+            const passed = data.numPassedTests || 0;
+            const total  = data.numTotalTests  || 0;
+            const pct    = total > 0 ? Math.round((passed / total) * 100) : 0;
+            const icon   = failed === 0 ? '✅' : '❌';
+            const rows   = (data.testResults || []).flatMap(suite =>
+              (suite.testResults || []).map(t => [
+                path.basename(suite.testFilePath || ''),
+                t.fullName || '',
+                t.status === 'passed' ? '✅ PASS' : t.status === 'failed' ? '❌ FAIL' : '⏭ SKIP',
+                t.duration ? `${t.duration}ms` : '—',
+              ])
+            );
+            await core.summary
+              .addHeading(`${icon} Client Tests — ${failed === 0 ? 'PASSED' : 'FAILED'}`)
+              .addTable([
+                [
+                  { data: 'Suite',    header: true },
+                  { data: 'Test',     header: true },
+                  { data: 'Result',   header: true },
+                  { data: 'Duration', header: true },
+                ],
+                ...rows,
+              ])
+              .addRaw(`\n**Total:** ${total} | **Passed:** ${passed} | **Failed:** ${failed} | **Pass Rate:** ${pct}%\n`)
+              .write();
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-results
+          path: client-results.json
+
+  # ── Docker build & push (only after both test jobs pass) ──────────────────
+  build-push:
+    name: Build & Push Images
+    needs: [server-tests, client-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Compute image tag
+        id: tag
+        run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/${{ env.OWNER }}/expense-tracker-backend:latest
+            ghcr.io/${{ env.OWNER }}/expense-tracker-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/${{ env.OWNER }}/expense-tracker-frontend:latest
+            ghcr.io/${{ env.OWNER }}/expense-tracker-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Cross-repo dispatch (main push only) ──────────────────────────────────
+  dispatch-tests:
+    name: Trigger Test Pipeline
+    needs: [build-push]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Dispatch to expense-tracker-tests
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.TESTS_REPO_TOKEN }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: 'expense-tracker-tests',
+              event_type: 'app-deployed',
+              client_payload: {
+                sha: context.sha,
+                image_tag: '${{ needs.build-push.outputs.image_tag }}',
+                triggered_by: context.actor,
+                source_run_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              }
+            });
+            core.info('Test pipeline dispatched for image tag: ${{ needs.build-push.outputs.image_tag }}');
