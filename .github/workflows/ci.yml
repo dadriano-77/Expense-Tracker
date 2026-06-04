@@ -180,7 +180,8 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
-          context: ./server
+          context: .
+          file: ./server/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: |
             ghcr.io/${{ env.OWNER }}/expense-tracker-backend:latest
@@ -191,7 +192,8 @@ jobs:
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
-          context: ./client
+          context: .
+          file: ./client/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: |
             ghcr.io/${{ env.OWNER }}/expense-tracker-frontend:latest
