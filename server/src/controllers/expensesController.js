@@ -1,9 +1,9 @@
 const db = require('../db/database');
 
-function buildWhere(query) {
+function buildWhere(query, userId) {
   const { year, month, category_id, q } = query;
-  const conditions = [];
-  const params = [];
+  const conditions = ['e.user_id = ?'];
+  const params = [userId];
 
   if (year && month) {
     const parsedYear = Number(year);
@@ -25,11 +25,11 @@ function buildWhere(query) {
     params.push(`%${q}%`);
   }
 
-  return { where: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params };
+  return { where: `WHERE ${conditions.join(' AND ')}`, params };
 }
 
 exports.getAll = (req, res) => {
-  const built = buildWhere(req.query);
+  const built = buildWhere(req.query, req.user.id);
   if (!built) return res.status(400).json({ error: 'invalid year or month' });
   const { where, params } = built;
 
@@ -57,7 +57,7 @@ exports.getAll = (req, res) => {
 };
 
 exports.exportCsv = (req, res) => {
-  const built = buildWhere(req.query);
+  const built = buildWhere(req.query, req.user.id);
   if (!built) return res.status(400).json({ error: 'invalid year or month' });
   const { where, params } = built;
 
@@ -91,8 +91,8 @@ exports.getOne = (req, res) => {
     SELECT e.*, c.name AS category_name, c.color AS category_color
     FROM expenses e
     JOIN categories c ON e.category_id = c.id
-    WHERE e.id = ?
-  `).get(Number(req.params.id));
+    WHERE e.id = ? AND e.user_id = ?
+  `).get(Number(req.params.id), req.user.id);
   if (!row) return res.status(404).json({ error: 'expense not found' });
   res.json(row);
 };
@@ -109,14 +109,14 @@ exports.create = (req, res) => {
     return res.status(400).json({ error: 'amount must be a positive number' });
   }
 
-  const cat = db.prepare('SELECT id FROM categories WHERE id = ?').get(Number(category_id));
+  const cat = db.prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?').get(Number(category_id), req.user.id);
   if (!cat) {
     return res.status(400).json({ error: 'category not found' });
   }
 
   const result = db.prepare(
-    'INSERT INTO expenses (category_id, amount, description, date) VALUES (?, ?, ?, ?)'
-  ).run(Number(category_id), parsedAmount, description, date);
+    'INSERT INTO expenses (category_id, amount, description, date, user_id) VALUES (?, ?, ?, ?, ?)'
+  ).run(Number(category_id), parsedAmount, description, date, req.user.id);
 
   const expense = db.prepare('SELECT * FROM expenses WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(expense);
@@ -124,7 +124,7 @@ exports.create = (req, res) => {
 
 exports.update = (req, res) => {
   const id = Number(req.params.id);
-  const row = db.prepare('SELECT id FROM expenses WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id FROM expenses WHERE id = ? AND user_id = ?').get(id, req.user.id);
   if (!row) return res.status(404).json({ error: 'expense not found' });
 
   const { category_id, amount, description, date } = req.body;
@@ -137,12 +137,12 @@ exports.update = (req, res) => {
     return res.status(400).json({ error: 'amount must be a positive number' });
   }
 
-  const cat = db.prepare('SELECT id FROM categories WHERE id = ?').get(Number(category_id));
+  const cat = db.prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?').get(Number(category_id), req.user.id);
   if (!cat) return res.status(400).json({ error: 'category not found' });
 
   db.prepare(
-    "UPDATE expenses SET category_id = ?, amount = ?, description = ?, date = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(Number(category_id), parsedAmount, description, date, id);
+    "UPDATE expenses SET category_id = ?, amount = ?, description = ?, date = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
+  ).run(Number(category_id), parsedAmount, description, date, id, req.user.id);
 
   const expense = db.prepare(`
     SELECT e.*, c.name AS category_name, c.color AS category_color
@@ -154,9 +154,9 @@ exports.update = (req, res) => {
 
 exports.remove = (req, res) => {
   const id = Number(req.params.id);
-  const row = db.prepare('SELECT id FROM expenses WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id FROM expenses WHERE id = ? AND user_id = ?').get(id, req.user.id);
   if (!row) return res.status(404).json({ error: 'expense not found' });
 
-  db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+  db.prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?').run(id, req.user.id);
   res.sendStatus(204);
 };

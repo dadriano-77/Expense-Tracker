@@ -9,6 +9,7 @@ exports.getDashboard = (req, res) => {
   }
 
   const datePrefix = `${parsedYear}-${String(parsedMonth).padStart(2, '0')}`;
+  const userId = req.user.id;
 
   const rows = db.prepare(`
     SELECT
@@ -25,13 +26,14 @@ exports.getDashboard = (req, res) => {
       END AS utilization_percent
     FROM categories c
     LEFT JOIN budgets b
-      ON b.category_id = c.id AND b.year = ? AND b.month = ?
+      ON b.category_id = c.id AND b.year = ? AND b.month = ? AND b.user_id = ?
     LEFT JOIN expenses e
-      ON e.category_id = c.id AND substr(e.date, 1, 7) = ?
+      ON e.category_id = c.id AND substr(e.date, 1, 7) = ? AND e.user_id = ?
+    WHERE c.user_id = ?
     GROUP BY c.id, c.name, c.color, b.amount
     HAVING b.id IS NOT NULL OR COALESCE(SUM(e.amount), 0) > 0
     ORDER BY c.name ASC
-  `).all(parsedYear, parsedMonth, datePrefix);
+  `).all(parsedYear, parsedMonth, userId, datePrefix, userId, userId);
 
   const total_budget = rows.reduce((s, r) => s + r.budget_amount, 0);
   const total_spent  = rows.reduce((s, r) => s + r.spent_amount, 0);

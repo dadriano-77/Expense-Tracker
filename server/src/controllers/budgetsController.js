@@ -12,9 +12,9 @@ exports.getAll = (req, res) => {
     SELECT b.*, c.name AS category_name, c.color AS category_color
     FROM budgets b
     JOIN categories c ON b.category_id = c.id
-    WHERE b.year = ? AND b.month = ?
+    WHERE b.year = ? AND b.month = ? AND b.user_id = ?
     ORDER BY c.name ASC
-  `).all(year, month);
+  `).all(year, month, req.user.id);
 
   res.json(rows);
 };
@@ -40,14 +40,14 @@ exports.upsert = (req, res) => {
     return res.status(400).json({ error: 'year must be a valid integer' });
   }
 
-  const cat = db.prepare('SELECT id FROM categories WHERE id = ?').get(Number(category_id));
+  const cat = db.prepare('SELECT id FROM categories WHERE id = ? AND user_id = ?').get(Number(category_id), req.user.id);
   if (!cat) return res.status(400).json({ error: 'category not found' });
 
   db.prepare(`
-    INSERT INTO budgets (category_id, year, month, amount)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO budgets (category_id, year, month, amount, user_id)
+    VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(category_id, year, month) DO UPDATE SET amount = excluded.amount
-  `).run(Number(category_id), parsedYear, parsedMonth, parsedAmount);
+  `).run(Number(category_id), parsedYear, parsedMonth, parsedAmount, req.user.id);
 
   const row = db.prepare(`
     SELECT b.*, c.name AS category_name, c.color AS category_color
@@ -60,9 +60,9 @@ exports.upsert = (req, res) => {
 
 exports.remove = (req, res) => {
   const id = Number(req.params.id);
-  const row = db.prepare('SELECT id FROM budgets WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id FROM budgets WHERE id = ? AND user_id = ?').get(id, req.user.id);
   if (!row) return res.status(404).json({ error: 'budget not found' });
 
-  db.prepare('DELETE FROM budgets WHERE id = ?').run(id);
+  db.prepare('DELETE FROM budgets WHERE id = ? AND user_id = ?').run(id, req.user.id);
   res.sendStatus(204);
 };
