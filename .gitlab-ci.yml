@@ -1,5 +1,6 @@
 stages:
   - test
+  - report
   - build
   - trigger
 
@@ -16,7 +17,13 @@ server-tests:
     - docker
   script:
     - npm ci
-    - npm test --workspace=server
+    - mkdir -p reports/unit
+    - npm test --workspace=server -- --json --outputFile=../reports/unit/results.json
+  artifacts:
+    when: always
+    paths:
+      - reports/unit/
+    expire_in: 30 days
 
 client-tests:
   stage: test
@@ -25,9 +32,57 @@ client-tests:
     - docker
   script:
     - npm ci
-    - npm test --workspace=client -- --run
+    - mkdir -p reports/component
+    - npm test --workspace=client -- --reporter=json --outputFile=../reports/component/results.json
+  artifacts:
+    when: always
+    paths:
+      - reports/component/
+    expire_in: 30 days
 
-# ── Stage 2: Build & push to GitLab Container Registry ────────────────────
+# ── Stage 2: Generate unit test report ────────────────────────────────────
+
+generate-report:
+  stage: report
+  image: node:22-alpine
+  tags:
+    - docker
+  when: always
+  dependencies:
+    - server-tests
+    - client-tests
+  script:
+    - mkdir -p reports/unit reports/component
+    - |
+      node -e "
+        const fs = require('fs');
+        const unit = fs.existsSync('reports/unit/results.json')
+          ? JSON.parse(fs.readFileSync('reports/unit/results.json', 'utf8'))
+          : null;
+        const comp = fs.existsSync('reports/component/results.json')
+          ? JSON.parse(fs.readFileSync('reports/component/results.json', 'utf8'))
+          : null;
+        const unitFailed = unit ? (unit.numFailedTests || 0) > 0 : false;
+        const compFailed = comp ? (comp.numFailedTests || 0) > 0 : false;
+        const overall = (unitFailed || compFailed) ? 'FAIL' : 'PASS';
+        fs.writeFileSync('reports/pipeline-run.json', JSON.stringify({
+          runAt: new Date().toISOString(),
+          durationMs: 0,
+          overallStatus: overall,
+          stages: [
+            { name: 'Unit Tests',      status: unit ? (unitFailed ? 'FAIL' : 'PASS') : 'SKIP', durationMs: 0 },
+            { name: 'Component Tests', status: comp ? (compFailed ? 'FAIL' : 'PASS') : 'SKIP', durationMs: 0 },
+          ]
+        }, null, 2));
+      "
+    - node generate-report.js reports
+  artifacts:
+    when: always
+    paths:
+      - reports/pipeline-report.html
+    expire_in: 30 days
+
+# ── Stage 3: Build & push to GitLab Container Registry ────────────────────
 
 build-push:
   stage: build
@@ -48,7 +103,7 @@ build-push:
     - docker tag $FRONTEND_IMAGE registry.gitlab.com/dadriano2/expense-tracker/frontend:latest
     - docker push registry.gitlab.com/dadriano2/expense-tracker/frontend:latest
 
-# ── Stage 3: Trigger test pipeline ────────────────────────────────────────
+# ── Stage 4: Trigger test pipeline ────────────────────────────────────────
 
 trigger-tests:
   stage: trigger
