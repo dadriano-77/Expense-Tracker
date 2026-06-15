@@ -1,0 +1,29 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-registry.gitlab.com/dadriano2/expense-tracker/backend:latest}
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    volumes:
+      - staging-db:/app/server/data
+    networks:
+      - expense-tracker-staging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-registry.gitlab.com/dadriano2/expense-tracker/frontend:latest}
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - expense-tracker-staging
+
+networks:
+  expense-tracker-staging:
+
+volumes:
+  staging-db:
