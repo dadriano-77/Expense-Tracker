@@ -85,7 +85,6 @@ generate-report:
 
 # ── Stage 3: Build & push to GitLab Container Registry ────────────────────
 
-
 build-push:
   stage: build
   image: docker:24-cli
@@ -144,7 +143,7 @@ trigger-tests:
     - apk add --no-cache curl
   script:
     - |
-      curl -s -f -X POST \
+      curl -f -X POST \
         --form "token=$TEST_TRIGGER_TOKEN" \
         --form "ref=main" \
         --form "variables[BACKEND_IMAGE]=$BACKEND_IMAGE" \
