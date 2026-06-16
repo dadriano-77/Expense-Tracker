@@ -143,7 +143,8 @@ trigger-tests:
     - apk add --no-cache curl
   script:
     - |
-      curl -f -X POST \
+      echo "Triggering pipeline for project: $TEST_PROJECT_ID"
+      curl -v -f -X POST \
         --form "token=$TEST_TRIGGER_TOKEN" \
         --form "ref=main" \
         --form "variables[BACKEND_IMAGE]=$BACKEND_IMAGE" \
