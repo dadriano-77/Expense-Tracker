@@ -10,7 +10,7 @@ A full-stack personal finance tool for tracking expenses, setting monthly catego
 - **Dashboard** — monthly summary with per-category budget utilization progress bars
 - **Charts** — spending-by-category pie chart and budget-vs-actual bar chart
 - **Dark mode** — persists via `localStorage`, respects system preference on first load
-- **Responsive** — mobile-friendly layout with collapsible hamburger nav
+- **Responsive** — mobile-friendly layout with collapsible hamburger nav()
 
 ## Tech Stack
 
