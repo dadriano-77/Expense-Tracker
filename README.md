@@ -14,13 +14,13 @@ A full-stack personal finance tool for tracking expenses, setting monthly catego
 
 ## Tech Stack
 
-| Layer      | Technology                                              |
-|------------|---------------------------------------------------------|
-| Frontend   | React 18 + Vite 5 + Recharts                           |
-| Backend    | Node.js + Express 4                                     |
-| Database   | SQLite via built-in `node:sqlite` (Node.js 22+)        |
-| Testing    | Jest + Supertest (backend) · Vitest + RTL (frontend)   |
-| Monorepo   | npm workspaces + concurrently                           |
+| Layer    | Technology                                           |
+| -------- | ---------------------------------------------------- |
+| Frontend | React 18 + Vite 5 + Recharts                         |
+| Backend  | Node.js + Express 4                                  |
+| Database | SQLite via built-in `node:sqlite` (Node.js 22+)      |
+| Testing  | Jest + Supertest (backend) · Vitest + RTL (frontend) |
+| Monorepo | npm workspaces + concurrently                        |
 
 ## Architecture
 
@@ -74,7 +74,7 @@ npm install
 npm run dev
 ```
 
-- Frontend: http://localhost:5173  
+- Frontend: http://localhost:5173
 - Backend API: http://localhost:3001/api
 
 > The Vite dev server proxies all `/api/*` requests to the Express server automatically.
@@ -83,47 +83,47 @@ npm run dev
 
 Run these from the **repo root**:
 
-| Script                | Description                                    |
-|-----------------------|------------------------------------------------|
-| `npm run dev`         | Start Express + Vite concurrently              |
-| `npm test`            | Run backend tests then frontend tests          |
-| `npm run test:server` | Jest + Supertest (backend only)                |
-| `npm run test:client` | Vitest + RTL (frontend only)                   |
+| Script                | Description                           |
+| --------------------- | ------------------------------------- |
+| `npm run dev`         | Start Express + Vite concurrently     |
+| `npm test`            | Run backend tests then frontend tests |
+| `npm run test:server` | Jest + Supertest (backend only)       |
+| `npm run test:client` | Vitest + RTL (frontend only)          |
 
 Run from **`server/`**:
 
-| Script          | Description                              |
-|-----------------|------------------------------------------|
-| `npm run dev`   | Start Express with nodemon (auto-reload) |
-| `npm start`     | Start Express (production)               |
-| `npm test`      | Run Jest tests in-band                   |
+| Script        | Description                              |
+| ------------- | ---------------------------------------- |
+| `npm run dev` | Start Express with nodemon (auto-reload) |
+| `npm start`   | Start Express (production)               |
+| `npm test`    | Run Jest tests in-band                   |
 
 Run from **`client/`**:
 
-| Script              | Description                     |
-|---------------------|---------------------------------|
-| `npm run dev`       | Start Vite dev server           |
-| `npm run build`     | Build for production into dist/ |
-| `npm test`          | Run Vitest once                 |
-| `npm run test:watch`| Vitest in watch mode            |
+| Script               | Description                     |
+| -------------------- | ------------------------------- |
+| `npm run dev`        | Start Vite dev server           |
+| `npm run build`      | Build for production into dist/ |
+| `npm test`           | Run Vitest once                 |
+| `npm run test:watch` | Vitest in watch mode            |
 
 ## API Endpoints
 
-| Resource   | Method | Path                      | Description                        |
-|------------|--------|---------------------------|------------------------------------|
-| Categories | GET    | /api/categories           | List all categories                |
-|            | POST   | /api/categories           | Create category                    |
-|            | PUT    | /api/categories/:id       | Update category                    |
-|            | DELETE | /api/categories/:id       | Delete category                    |
-| Expenses   | GET    | /api/expenses             | List with filters, pagination, totals |
-|            | POST   | /api/expenses             | Create expense                     |
-|            | PUT    | /api/expenses/:id         | Update expense                     |
-|            | DELETE | /api/expenses/:id         | Delete expense                     |
-|            | GET    | /api/expenses/export      | Export filtered expenses as CSV    |
-| Budgets    | GET    | /api/budgets              | List budgets for a month           |
-|            | PUT    | /api/budgets              | Upsert budget (create or update)   |
-|            | DELETE | /api/budgets/:id          | Delete budget                      |
-| Dashboard  | GET    | /api/dashboard            | Aggregated monthly summary         |
+| Resource   | Method | Path                 | Description                           |
+| ---------- | ------ | -------------------- | ------------------------------------- |
+| Categories | GET    | /api/categories      | List all categories                   |
+|            | POST   | /api/categories      | Create category                       |
+|            | PUT    | /api/categories/:id  | Update category                       |
+|            | DELETE | /api/categories/:id  | Delete category                       |
+| Expenses   | GET    | /api/expenses        | List with filters, pagination, totals |
+|            | POST   | /api/expenses        | Create expense                        |
+|            | PUT    | /api/expenses/:id    | Update expense                        |
+|            | DELETE | /api/expenses/:id    | Delete expense                        |
+|            | GET    | /api/expenses/export | Export filtered expenses as CSV       |
+| Budgets    | GET    | /api/budgets         | List budgets for a month              |
+|            | PUT    | /api/budgets         | Upsert budget (create or update)      |
+|            | DELETE | /api/budgets/:id     | Delete budget                         |
+| Dashboard  | GET    | /api/dashboard       | Aggregated monthly summary            |
 
 ## Database Schema
 
