@@ -1,4 +1,4 @@
-// THIS IS A TRIAL FOR SMART COMMIT
+// THIS IS A TRIAL FOR SMART COMMIT TAKE 2
 import { useState, useEffect } from 'react';
 import { getBudgets, upsertBudget, deleteBudget } from '../api/budgetsApi';
 import { getCategories } from '../api/categoriesApi';
